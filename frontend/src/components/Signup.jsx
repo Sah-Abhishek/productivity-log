@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
@@ -10,28 +10,36 @@ const SignUpForm = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const username = watch("username");
+  const baseURL = import.meta.env.VITE_BACK_URL;
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const onSubmit = async (data) => {
     console.log(data);
     // Handle form submission
-    try{
-        const response = await axios.post(`${baseURL}/signup`, data);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        console.log(isSubmitting);
-        console.log(response.data);
-        console.log("register object", register);
-    }catch(error){
-        console.log("Error while sending data", error);
-        if(error.response && error.response.status === 409)
-          setUsernameError("UserName already exist");
+    try {
+      setError('');
+      const response = await axios.post(`${baseURL}/signup`, data);
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (response.status === 201) {
+        navigate('/login');
+      }
+      console.log(isSubmitting);
+      console.log(response);
+      console.log("register object", register);
+    } catch (error) {
+      setError('Internal server error');
+      console.log("Error while sending data", error);
+      if (error.response && error.response.status === 409)
+        setUsernameError("UserName already exist");
     }
   };
-  React.useEffect(()=>{
-    if(username){
+  React.useEffect(() => {
+    if (username) {
       setUsernameError('');
     }
   }, [username]);
- 
+
   const password = watch("password");
 
   return (
@@ -56,14 +64,15 @@ const SignUpForm = () => {
             <input
               id="username"
               type="text"
-              {...register("username", 
-                { required: "Username is required",
-                    validate: {
-                        lowercase: value => /^[a-z0-9]+$/.test(value) || "Username must be lowercase without spaces and special characters",
-                      }
-                 },
-                
-            )}
+              {...register("username",
+                {
+                  required: "Username is required",
+                  validate: {
+                    lowercase: value => /^[a-z0-9]+$/.test(value) || "Username must be lowercase without spaces and special characters",
+                  }
+                },
+
+              )}
               className="w-full px-3 py-2 border border-gray-300 focus:outline-none "
               placeholder="Username"
             />
@@ -79,7 +88,7 @@ const SignUpForm = () => {
               className="w-full px-3 py-2 border border-gray-300 focus:outline-none bg-white text-gray-500"
             >
               <option value="">Select Year</option>
-              <option  value="1st">1st</option>
+              <option value="1st">1st</option>
               <option value="2nd">2nd</option>
               <option value="3rd">3rd</option>
               <option value="4th">4th</option>
@@ -93,22 +102,22 @@ const SignUpForm = () => {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                {...register("password", { 
+                {...register("password", {
                   required: "Password is required",
                   minLength: { value: 8, message: "Password must be at least 8 characters" }
                 })}
                 className="w-full px-3 py-2 border border-gray-300 focus:outline-none"
                 placeholder="Password"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
                 {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-red-600">{errors.password.message }</p>}
+            {errors.password && <p className="text-xs text-red-600">{errors.password.message}</p>}
           </div>
 
           <div className="space-y-1">
@@ -117,15 +126,15 @@ const SignUpForm = () => {
               <input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                {...register("confirmPassword", { 
+                {...register("confirmPassword", {
                   required: "Please confirm your password",
                   validate: value => value === password || "The passwords do not match"
                 })}
                 className="w-full px-3 py-2 border border-gray-300 focus:outline-none"
                 placeholder="Confirm Password"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
@@ -150,7 +159,9 @@ const SignUpForm = () => {
           <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
             Sign in
           </Link>
+
         </p>
+        <div className='text-red-500'>{error}</div>
       </div>
     </div>
   );
